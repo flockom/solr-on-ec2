@@ -1,0 +1,69 @@
+Create your AWS account
+
+create a x.509 certificate to use the command line utilites from your PC
+   - go to "My Account/Console" and click security credentials and create a new certificate
+   - store the cert and private key in ~/.ec2/
+
+download the command line utils from http://aws.amazon.com/developertools/351
+   - you need java to install the tools
+   - add some environment variables where you like:
+
+   export EC2_HOME=/opt/ec2-api-tools-1.5.2.5
+   export EC2_PRIVATE_KEY=~/.ec2/pk-xxxxxxxxxxxxxxxxxxxx.pem
+   export EC2_CERT=~/.ec2/cert-xxxxxxxxxxxxx.pem
+   #add ec2 tools to default path
+   export PATH=$PATH:$EC2_HOME/bin
+
+Get an instance up and running (see http://docs.amazonwebservices.com/AmazonEC2/dg/2006-06-26/creating-an-ami.html#ami-from-existing-image)
+
+   - create a keypair for ec2, this registers the key with your AWS account
+   $ ec2-add-keypair frank-ec2
+   $ ec2-add-keypair frank-ec2 > ~/.ec2/id_rsa-frank-ec2
+   $ chmod 600 ~/.ec2/id_rsa-frank-ec2 
+
+   - find the ami of an instance you want to use
+       I am using ami-8baa73e2 which is ubuntu 11.10 64bit with instance storage
+    
+   - start a small instance with the key just created
+   $ ec2-run-instances ami-8baa73e2 -k frank-ec2 -t m1.small
+
+   - get its ip address, there is an internal and external
+   $ ec2-describe-instances
+   
+   - open up port 22 so we can ssh in, this opens 22 for all instaces in the default security group
+   $ ec2-authorize default -p 22
+
+   - join the cloud
+   $ ssh -i ~/.ec2/id_rsa-frank-ec2 ubuntu@ec2-xx-xx-xxx-xxx.compute-1.amazonaws.com
+   
+
+Start adding packages you want for you're default AMI, I choose
+emacs23-nox
+jdk6 -- not in the repo, do it manually
+- solr3.6  - installed manually
+haproxy
+build-essential -just for good measure
+ec2-ami-tools   - in multiverse
+
+Build a new AMI from the current machine so your new instances have all the software you need (see http://docs.amazonwebservices.com/AmazonEC2/dg/2006-06-26/bundling-an-ami.html http://blog.afkham.org/2008/10/how-to-create-ec2-ami.html)
+
+   - first scp your 501 cert and private key to the instance (put them in /tmp so they are not bundled)
+      you should probobly not make these public, your bash history, logs,etc will also be bundled.
+   the -u argument is your AWS account number. It is displayed on the security credentials page
+   $ ec2-bundle-vol -c /tmp/cert-xxxxxxxxxxxxxx.pem -k /tmp/pk-xxxxxxx.pem -u xxxx-xxxx-xxxx
+
+   - upload the AMI to S3 (that costs $, but 5GB is free for a year)
+   -b is a bucket name on S3, it must be globally unique across all users, it will be created if it does not exist
+   -a is your access key ID, it is under the security credentials page, -s is the secret access key (click show next to the access key)
+   it is automatically created when you make your AWS account.
+
+   $ ec2-upload-bundle -b my-bucket -m /tmp/image.manifest.xml -a XXXXXXXXXXX -s yyyyyyyyyyyyyyyyyyy
+   
+   - register the image in your PC so you can boot instaces from it
+   $ ec2-register my-bucket/image.manifest.xml
+   IMAGE	ami-d8855eb1
+
+   -now you have the ami and can boot a new instance with it
+   $ ec2-run-instances ami-d8855eb1 -k frank-ec2 -t m1.small   
+   -log in to it to make yourself sure then kill it
+   $ ec2-terminate-instances i-60117c07

@@ -1,0 +1,92 @@
+downloaded solr 3.5 (not source code)
+
+copied the ./example directory
+
+modified solr/conf/solrconfig.xml around lines 71-84 to point to downloaded libraries
+
+verify the instance will start
+$ java -jar start.jar
+
+
+/solr/conf/schema.xml  -- tells lucene what and how to index files
+
+set the port number without edditing configs
+  java -Djetty.port=8984 -jar start.jar 
+
+SHARDING:
+  http://wiki.apache.org/solr/DistributedSearch
+ 
+  set shards in config instead of in request:
+  modify solr/conf/solrconfig.xml:
+  add a new request handler:
+  <requestHandler name="/dist-query" class="solr.SearchHandler" >
+      <lst name="defaults">
+         <str name="shards">localhost:1445/solr,localhost:1446/solr</str>
+      </lst>
+  </requestHandler>
+
+  now sending a query to this request handler such as:
+  http://localhost:1445/solr/dist-query?q=ipod+solr
+  will cause the same request to be sent to the default request handler of all the shards listed
+
+  so far best understanding of how to change sharding is to modify file and restart solr
+
+REPLICATION:
+  http://wiki.apache.org/solr/SolrReplication
+  MASTER:
+    modify solr/conf/solrconfig.xml, add a new request handler for replication
+    <!-- master,replication -->
+  <requestHandler name="/replication" class="solr.ReplicationHandler" >
+    <lst name="master">
+        <!--Replicate on 'startup' and 'commit'. 'optimize' is also a valid value for replicateAfter. -->
+        <str name="replicateAfter">startup</str>
+        <str name="replicateAfter">commit</str>        
+        <!--If configuration files need to be replicated give the names here, separated by comma -->
+        <str name="confFiles">schema.xml,stopwords_en.txt</str>        
+    </lst>
+    <!-- keep only 1 backup.  Using this parameter precludes using the "numberToKeep" request parameter. (Solr3.6 / Solr4.0)-->
+    <str name="maxNumberOfBackups">1</str> 
+  </requestHandler>
+
+  SLAVE:
+  modify solr/conf/solrconfig.xml, add a new request handler for replication
+  <requestHandler name="/replication" class="solr.ReplicationHandler" >
+    <lst name="slave">
+        <str name="masterUrl">http://${MASTER_CORE_URL}/solr/replication</str>
+        <str name="pollInterval">00:00:20</str>
+    </lst>
+  </requestHandler>
+
+  create a file solr/conf/solrcore.properties:
+  MASTER_CORE_URL=localhost:1445
+
+
+
+setting up a 2x2 cluster:
+
+  - the .shards param should point to itself instead of the haproxy
+    server to avoid an extra request to the load balancer
+
+  -launch master
+  $ java -Dsolr.distribution.shards="localhost:8080/solr/" -Djetty.port=8080 -jar start.jar &
+  
+  -launch slave 
+  $ java -Dsolr.replication.master="localhost:8080" -Dsolr.distribution.shards="localhost:8081/solr" -Djetty.port=8081 -jar start.jar &
+
+  -launch HAProxy
+  $ haproxy -f s1proxy.config &
+  
+  
+
+    
+
+
+
+
+NEED: 
+ - better way to dynamically change sharding
+ - load balancing across shards?
+ - add parameters to solrcore.properties (shards,)
+ - remove unnecessary files (stopwords.txt, elevate.txt, sampel data,)
+ - investigage "If a replication involved downloading of at least one conf file a core reload is issued instead of a 'commit' command."
+    "core reload" to change the sharding at run time.

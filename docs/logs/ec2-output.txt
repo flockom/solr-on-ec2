@@ -1,0 +1,55 @@
+$ ec2-run-instances ami-4dad7424 --instance-type t1.micro  -k frank-ec2 -H
+Type	ReservationID	Owner	Groups	Platform
+RESERVATION	r-c44a41a7	220454885660	default
+INSTANCE	i-2cdb934b	ami-4dad7424			pending	frank-ec2	0		t1.micro	2012-04-23T05:32:19+0000	us-east-1c	aki-825ea7eb			monitoring-disabled					ebs					paravirtual	xen		sg-01b81a69	default
+
+
+
+
+
+
+$ ec2-describe-instances
+RESERVATION	r-c44a41a7	220454885660	default
+INSTANCE	i-2cdb934b	ami-4dad7424	ec2-23-20-12-113.compute-1.amazonaws.com	ip-10-204-215-63.ec2.internal	running	frank-ec2	0		t1.micro	2012-04-23T05:32:19+0000	us-east-1c	aki-825ea7eb			monitoring-disabled	23.20.12.113	10.204.215.63			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-2435b94b	2012-04-23T05:32:44.000Z	true
+
+
+
+$ ec2-describe-instances -H
+Type	ReservationID	Owner	Groups	Platform
+RESERVATION	r-c44a41a7	220454885660	default
+INSTANCE	i-2cdb934b	ami-4dad7424	ec2-23-20-12-113.compute-1.amazonaws.com	ip-10-204-215-63.ec2.internal	running	frank-ec2	0		t1.micro	2012-04-23T05:32:19+0000	us-east-1c	aki-825ea7eb			monitoring-disabled	23.20.12.113	10.204.215.63			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-2435b94b	2012-04-23T05:32:44.000Z	true
+
+
+
+
+$ ec2-run-instances ami-4dad7424 --instance-type t1.micro  -k frank-ec2 -H -n 2
+Type	ReservationID	Owner	Groups	Platform
+RESERVATION	r-32464d51	220454885660	default
+INSTANCE	i-04eaa263	ami-4dad7424			pending	frank-ec2	0		t1.micro	2012-04-23T05:45:43+0000	us-east-1b	aki-825ea7eb			monitoring-disabled					ebs					paravirtual	xen		sg-01b81a69	default
+INSTANCE	i-02eaa265	ami-4dad7424			pending	frank-ec2	1		t1.micro	2012-04-23T05:45:43+0000	us-east-1b	aki-825ea7eb			monitoring-disabled					ebs					paravirtual	xen		sg-01b81a69	default
+
+
+$ ec2-describe-instances
+RESERVATION	r-c44a41a7	220454885660	default
+INSTANCE	i-2cdb934b	ami-4dad7424	ec2-23-20-12-113.compute-1.amazonaws.com	ip-10-204-215-63.ec2.internal	running	frank-ec2	0		t1.micro	2012-04-23T05:32:19+0000	us-east-1c	aki-825ea7eb			monitoring-disabled	23.20.12.113	10.204.215.63			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-2435b94b	2012-04-23T05:32:44.000Z	true
+RESERVATION	r-32464d51	220454885660	default
+INSTANCE	i-04eaa263	ami-4dad7424	ec2-107-21-142-241.compute-1.amazonaws.com	domU-12-31-39-0F-25-F8.compute-1.internal	pending	frank-ec2	0		t1.micro	2012-04-23T05:45:43+0000	us-east-1b	aki-825ea7eb			monitoring-disabled	107.21.142.241	10.193.38.10			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-d8cd42b7	2012-04-23T05:45:49.000Z	true
+INSTANCE	i-02eaa265	ami-4dad7424	ec2-174-129-118-40.compute-1.amazonaws.com	domU-12-31-39-15-0E-DA.compute-1.internal	pending	frank-ec2	1		t1.micro	2012-04-23T05:45:43+0000	us-east-1b	aki-825ea7eb			monitoring-disabled	174.129.118.40	10.207.13.36			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-d6cd42b9	2012-04-23T05:45:49.000Z	true
+
+
+
+
+$ ec2-describe-instances
+RESERVATION	r-c44a41a7	220454885660	default
+INSTANCE	i-2cdb934b	ami-4dad7424	ec2-23-20-12-113.compute-1.amazonaws.com	ip-10-204-215-63.ec2.internal	running	frank-ec2	0		t1.micro	2012-04-23T05:32:19+0000	us-east-1c	aki-825ea7eb			monitoring-disabled	23.20.12.113	10.204.215.63			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-2435b94b	2012-04-23T05:32:44.000Z	true
+RESERVATION	r-32464d51	220454885660	default
+INSTANCE	i-04eaa263	ami-4dad7424	ec2-107-21-142-241.compute-1.amazonaws.com	domU-12-31-39-0F-25-F8.compute-1.internal	running	frank-ec2	0		t1.micro	2012-04-23T05:45:43+0000	us-east-1b	aki-825ea7eb			monitoring-disabled	107.21.142.241	10.193.38.10			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-d8cd42b7	2012-04-23T05:46:06.000Z	true
+INSTANCE	i-02eaa265	ami-4dad7424	ec2-174-129-118-40.compute-1.amazonaws.com	domU-12-31-39-15-0E-DA.compute-1.internal	running	frank-ec2	1		t1.micro	2012-04-23T05:45:43+0000	us-east-1b	aki-825ea7eb			monitoring-disabled	174.129.118.40	10.207.13.36			ebs					paravirtual	xen		sg-01b81a69	default
+BLOCKDEVICE	/dev/sda1	vol-d6cd42b9	2012-04-23T05:46:06.000Z	true
