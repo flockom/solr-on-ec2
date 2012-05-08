@@ -4,6 +4,9 @@
 # essential the same as ec2-run-instances except this will block until
 # all the instances are available.
 
+
+# TODO: should make it take the same parameters as ec2-run-instances i.e. just pass them all along       
+
 # USAGE: ./ec2-run-instances-blocking.rb AMI TYPE NUMBER KEY
 #     AMI    - the amazon machine image number to launch ex 'ami-4dad7424'
 #     TYPE   - instance type to launc ex 't1.micro' (--instance-type)

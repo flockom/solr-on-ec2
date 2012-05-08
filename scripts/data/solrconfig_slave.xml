@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<config>
+
+  <abortOnConfigurationError>${solr.abortOnConfigurationError:true}</abortOnConfigurationError>
+  
+
+  <luceneMatchVersion>LUCENE_35</luceneMatchVersion>
+
+
+  <lib dir="${solr.install}/contrib/extraction/lib" />
+  <lib dir="${solr.install}/contrib/clustering/lib/" />
+  <lib dir="${solr.install}/contrib/velocity/lib" />
+
+
+  <lib dir="${solr.install}/dist/" regex="apache-solr-cell-\d.*\.jar" />
+  <lib dir="${solr.install}/dist/" regex="apache-solr-clustering-\d.*\.jar" />
+  <lib dir="${solr.install}/dist/" regex="apache-solr-dataimporthandler-\d.*\.jar" />
+  <lib dir="${solr.install}/dist/" regex="apache-solr-langid-\d.*\.jar" />
+  <lib dir="${solr.install}/dist/" regex="apache-solr-velocity-\d.*\.jar" />
+ 
+  <dataDir>${solr.data.dir:}</dataDir>
+
+
+
+  <directoryFactory name="DirectoryFactory" 
+                    class="${solr.directoryFactory:solr.StandardDirectoryFactory}"/>
+
+
+
+  <indexDefaults>
+
+    <useCompoundFile>false</useCompoundFile>
+
+    <mergeFactor>10</mergeFactor>
+
+    <ramBufferSizeMB>32</ramBufferSizeMB>
+
+    <maxFieldLength>10000</maxFieldLength>
+    <writeLockTimeout>1000</writeLockTimeout>
+
+
+    <lockType>native</lockType>
+
+
+  </indexDefaults>
+
+
+  <mainIndex>
+
+    <useCompoundFile>false</useCompoundFile>
+    <ramBufferSizeMB>32</ramBufferSizeMB>
+    <mergeFactor>10</mergeFactor>
+
+
+    <unlockOnStartup>false</unlockOnStartup>
+    
+
+    <reopenReaders>true</reopenReaders>
+
+
+    <deletionPolicy class="solr.SolrDeletionPolicy">
+      <!-- The number of commit points to be kept -->
+      <str name="maxCommitsToKeep">1</str>
+      <!-- The number of optimized commit points to be kept -->
+      <str name="maxOptimizedCommitsToKeep">0</str>
+
+    </deletionPolicy>
+
+
+    <infoStream file="INFOSTREAM.txt">false</infoStream> 
+
+  </mainIndex>
+
+
+  <jmx />
+
+
+
+  <updateHandler class="solr.DirectUpdateHandler2">
+
+
+  </updateHandler>
+  
+  <query>
+
+    <maxBooleanClauses>1024</maxBooleanClauses>
+
+
+
+    <filterCache class="solr.FastLRUCache"
+                 size="512"
+                 initialSize="512"
+                 autowarmCount="0"/>
+
+
+    <queryResultCache class="solr.LRUCache"
+		      size="512"
+		      initialSize="512"
+		      autowarmCount="0"/>
+    
+
+    <documentCache class="solr.LRUCache"
+                   size="512"
+                   initialSize="512"
+                   autowarmCount="0"/>
+    
+
+    <enableLazyFieldLoading>true</enableLazyFieldLoading>
+
+
+    <queryResultWindowSize>20</queryResultWindowSize>
+
+
+    <queryResultMaxDocsCached>200</queryResultMaxDocsCached>
+
+
+    <listener event="newSearcher" class="solr.QuerySenderListener">
+      <arr name="queries">
+
+      </arr>
+    </listener>
+    <listener event="firstSearcher" class="solr.QuerySenderListener">
+      <arr name="queries">
+        <lst>
+          <str name="q">static firstSearcher warming in solrconfig.xml</str>
+        </lst>
+      </arr>
+    </listener>
+
+
+    <useColdSearcher>false</useColdSearcher>
+
+
+    <maxWarmingSearchers>2</maxWarmingSearchers>
+
+  </query>
+
+
+
+  <requestDispatcher handleSelect="true" >
+
+    <requestParsers enableRemoteStreaming="true" 
+                    multipartUploadLimitInKB="2048000" />
+
+
+    <httpCaching never304="true" />
+
+  </requestDispatcher>
+
+
+
+
+  <!-- slave,replication -->
+  <requestHandler name="/replication" class="solr.ReplicationHandler" >
+    <lst name="slave">
+        <!--
+	    fully qualified url for the replication handler of master
+	    . It is possible to pass on this as a request param for
+	    the fetchindex command
+	-->
+        <str name="masterUrl">http://${solr.replication.master}/solr/replication</str>    
+        <!--
+	    Interval in which the slave should poll master .Format is
+	    HH:mm:ss . If this is absent slave does not poll
+	    automatically.  But a fetchindex can be triggered from the
+	    admin or the http API 
+	-->
+        <str name="pollInterval">00:00:20</str>
+    </lst>
+  </requestHandler>
+
+  <!--  dist-query sets default shards   -->
+  <requestHandler name="/dist-query" class="solr.SearchHandler" >
+    <lst name="defaults">
+      <str name="shards">${solr.distribution.shards}</str>
+    </lst>
+  </requestHandler>
+
+  <requestHandler name="/search" class="solr.SearchHandler" default="true">
+    <!-- default values for query parameters can be specified, these
+         will be overridden by parameters in the request
+    -->
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <int name="rows">10</int>
+    </lst>
+
+  </requestHandler>
+
+
+
+
+  <requestHandler name="/update" 
+                  class="solr.XmlUpdateRequestHandler">
+
+  </requestHandler>
+
+  <requestHandler name="/update/javabin" 
+                  class="solr.BinaryUpdateRequestHandler" />
+
+
+  <requestHandler name="/update/csv" 
+                  class="solr.CSVRequestHandler" 
+                  startup="lazy" />
+
+
+  <requestHandler name="/update/json" 
+                  class="solr.JsonUpdateRequestHandler" 
+                  startup="lazy" />
+
+
+  <requestHandler name="/update/extract" 
+                  startup="lazy"
+                  class="solr.extraction.ExtractingRequestHandler" >
+    <lst name="defaults">
+
+      <str name="fmap.content">text</str>
+      <str name="lowernames">true</str>
+      <str name="uprefix">ignored_</str>
+
+
+      <str name="captureAttr">true</str>
+      <str name="fmap.a">links</str>
+      <str name="fmap.div">ignored_</str>
+    </lst>
+  </requestHandler>
+
+
+  <requestHandler name="/update/xslt"
+		  startup="lazy"
+		  class="solr.XsltUpdateRequestHandler"/>
+
+
+  <requestHandler name="/analysis/field" 
+                  startup="lazy"
+                  class="solr.FieldAnalysisRequestHandler" />
+
+
+
+  <requestHandler name="/analysis/document" 
+                  class="solr.DocumentAnalysisRequestHandler" 
+                  startup="lazy" />
+
+
+  <requestHandler name="/admin/" 
+                  class="solr.admin.AdminHandlers" />
+
+
+  <!-- ping/healthcheck -->
+  <requestHandler name="/admin/ping" class="solr.PingRequestHandler">
+    <lst name="invariants">
+      <str name="qt">search</str>
+      <str name="q">solrpingquery</str>
+    </lst>
+    <lst name="defaults">
+      <str name="echoParams">all</str>
+    </lst>
+  </requestHandler>
+
+  <!-- Echo the request contents back to the client -->
+  <requestHandler name="/debug/dump" class="solr.DumpRequestHandler" >
+    <lst name="defaults">
+      <str name="echoParams">explicit</str> 
+      <str name="echoHandler">true</str>
+    </lst>
+  </requestHandler>
+  
+
+  <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
+
+    <str name="queryAnalyzerFieldType">textSpell</str>
+
+    
+    <lst name="spellchecker">
+      <str name="name">default</str>
+      <str name="field">name</str>
+      <str name="spellcheckIndexDir">spellchecker</str>
+      
+    </lst>
+
+
+  </searchComponent>
+
+
+  <requestHandler name="/spell" class="solr.SearchHandler" startup="lazy">
+    <lst name="defaults">
+      <str name="spellcheck.onlyMorePopular">false</str>
+      <str name="spellcheck.extendedResults">false</str>
+      <str name="spellcheck.count">1</str>
+    </lst>
+    <arr name="last-components">
+      <str>spellcheck</str>
+    </arr>
+  </requestHandler>
+
+
+  <searchComponent name="tvComponent" class="solr.TermVectorComponent"/>
+
+
+  <requestHandler name="tvrh" class="solr.SearchHandler" startup="lazy">
+    <lst name="defaults">
+      <bool name="tv">true</bool>
+    </lst>
+    <arr name="last-components">
+      <str>tvComponent</str>
+    </arr>
+  </requestHandler>
+
+  
+  <!-- Terms Component
+
+http://wiki.apache.org/solr/TermsComponent
+
+A component to return terms and document frequency of those
+terms
+  -->
+  <searchComponent name="terms" class="solr.TermsComponent"/>
+
+  <!-- A request handler for demonstrating the terms component -->
+  <requestHandler name="/terms" class="solr.SearchHandler" startup="lazy">
+    <lst name="defaults">
+      <bool name="terms">true</bool>
+    </lst>     
+    <arr name="components">
+      <str>terms</str>
+    </arr>
+  </requestHandler>
+
+
+
+  <searchComponent name="elevator" class="solr.QueryElevationComponent" >
+    <!-- pick a fieldType to analyze queries -->
+    <str name="queryFieldType">string</str>
+    <str name="config-file">elevate.xml</str>
+  </searchComponent>
+
+  <!-- A request handler for demonstrating the elevator component -->
+  <requestHandler name="/elevate" class="solr.SearchHandler" startup="lazy">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+    </lst>
+    <arr name="last-components">
+      <str>elevator</str>
+    </arr>
+  </requestHandler>
+
+  
+  <!--
+      Custom response writers can be declared as needed...
+  -->
+  <!-- The solr.velocity.enabled flag is used by Solr's test cases so that this response writer is not
+       loaded (causing an error if contrib/velocity has not been built fully) -->
+  <queryResponseWriter name="velocity" class="solr.VelocityResponseWriter" enable="${solr.velocity.enabled:true}"/>
+  
+
+  <!-- XSLT response writer transforms the XML output by any xslt file found
+       in Solr's conf/xslt directory.  Changes to xslt files are checked for
+       every xsltCacheLifetimeSeconds.  
+  -->
+  <queryResponseWriter name="xslt" class="solr.XSLTResponseWriter">
+    <int name="xsltCacheLifetimeSeconds">5</int>
+  </queryResponseWriter>
+
+</config>
