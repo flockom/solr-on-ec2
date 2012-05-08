@@ -3,6 +3,7 @@
 require 'json'
 
 # TODO: support for single machine shard, i.e. no slaves no HAProxy
+#       remove directory from SOLR_MASTER/SLAVE spec, its not used
 
 # USAGE: ./ec2-run-instances-blocking.rb CLUSTER 
 #     CLUSTER    - file specifying the cluster
@@ -10,9 +11,13 @@ require 'json'
 
 
 # CLUSTER grammar where [X] is zero or more Xs and (a,b,c) is a tuple,
-# capitol is non-terminal lowercase is a terminal which should be double-quoted
+# capitol is non-terminal lowercase is a terminal which should be
+# double-quoted to have no replication [SOLR-SLAVE] should be an empty
+# array [] and HAPROXY should be null. Format is JSON, see example below.
+# the HAPROXY on the CLUSTER line is the HAPROXY which distributed load across shards.
+# 
 #
-#  CLUSTER     -> [SHARD]
+#  CLUSTER     -> [[SHARD],HAPROXY]
 #  SHARD       -> (SOLR_MASTER,[SOLR_SLAVE],HAPROXY)
 #  SOLR_MASTER -> (SERVER,port,directory)
 #  SOLR_SLAVE  -> (SERVER,port,directory)
@@ -62,8 +67,10 @@ instances = Hash.new
 cluster.each do |shard|
   # get the SOLR_MASTER instance
   instances[shard[0][0][0]] = [shard[0][0][1],shard[0][0][2]]
-  # get the HAPROXY instance
-  instances[shard[2][0][0]] = [shard[2][0][1],shard[2][0][2]]
+  # get the HAPROXY instance if there is one
+  if(shard[2] != nil)
+    instances[shard[2][0][0]] = [shard[2][0][1],shard[2][0][2]]
+  end
   # get each SOLR_SLAVE instance
    shard[1].each do |slave|
      instances[slave[0][0]] = [slave[0][1],slave[0][2]]
@@ -103,7 +110,9 @@ cluster.each do |shard|
   # update the SOLR_MASTER instance
   update_server(shard[0][0],instances[shard[0][0][0]][1])
   # update the HAPROXY instance
-  update_server(shard[2][0],instances[shard[2][0][0]][1])
+  if(shard[2] != nil)
+    update_server(shard[2][0],instances[shard[2][0][0]][1])
+  end
   # update each SOLR_SLAVE instance
    shard[1].each do |slave|
     update_server(slave[0],instances[slave[0][0]][1])

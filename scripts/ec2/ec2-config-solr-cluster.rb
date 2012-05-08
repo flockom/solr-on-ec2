@@ -131,19 +131,21 @@ cluster.each_with_index do |shard,i|
     `#{cmd}`
   end
   
-  puts "~+~+~+~+~+~+~+~+~+~+~+SHARD-#{i}-HAPROXY~+~+~+~+~+~+~+~+~+~+~+"
-  # the HAProxy  
-  # generate the config file
-  haconfig = gen_HAProxy_config("shard-#{i}",shard[2][1],shard[1]+[shard[0]])
-  puts haconfig
-  # save it on the server
-  File.open("./haproxy-tmp", 'w') {|f| f.write(haconfig)}
-  cmd = "scp #{OPTS} ./haproxy-tmp #{USER}@#{shard[2][0][3]}:/mnt/shard-#{i}-haproxy"
-  puts cmd;puts
-  `#{cmd}`
-  # launch haproxy on the server
-  cmd = "ssh #{OPTS} #{USER}@#{shard[2][0][3]} 'nohup haproxy -f /mnt/shard-#{i}-haproxy >/dev/null 2>/dev/null &'"
-  puts cmd;puts
-  `#{cmd}`
+  if (shard[2] != nil)
+    puts "~+~+~+~+~+~+~+~+~+~+~+SHARD-#{i}-HAPROXY~+~+~+~+~+~+~+~+~+~+~+"
+    # the HAProxy  
+    # generate the config file
+    haconfig = gen_HAProxy_config("shard-#{i}",shard[2][1],shard[1]+[shard[0]])
+    puts haconfig
+    # save it on the server
+    File.open("./haproxy-tmp", 'w') {|f| f.write(haconfig)}
+    cmd = "scp #{OPTS} ./haproxy-tmp #{USER}@#{shard[2][0][3]}:/mnt/shard-#{i}-haproxy"
+    puts cmd;puts
+    `#{cmd}`
+    # launch haproxy on the server
+    cmd = "ssh #{OPTS} #{USER}@#{shard[2][0][3]} 'nohup haproxy -f /mnt/shard-#{i}-haproxy >/dev/null 2>/dev/null &'"
+    puts cmd;puts
+    `#{cmd}`
+  end
 
 end
